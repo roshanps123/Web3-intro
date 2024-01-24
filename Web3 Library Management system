@@ -1,0 +1,515 @@
+
+import sqlite3
+import tkinter as tk
+import smtplib
+
+# Connect to the database
+conn = sqlite3.connect("library.db")
+
+# Create the Books table
+conn.execute("""CREATE TABLE Books (
+    title TEXT NOT NULL,
+    author TEXT NOT NULL,
+    publication_year INTEGER NOT NULL,
+    available_copies INTEGER NOT NULL,
+    total_copies INTEGER NOT NULL
+);""")
+
+# Save the changes and close the connection
+conn.commit()
+conn.close()
+
+# Define the main window
+root = tk.Tk()
+root.title("Library Management System")
+
+# Function to manage book addition
+def add_book():
+    # Show an add book window
+    add_book_window = tk.Toplevel(root)
+    add_book_window.title("Add Book")
+
+    # Define labels and entry fields for book information
+    title_label = tk.Label(add_book_window, text="Title:")
+    title_entry = tk.Entry(add_book_window)
+
+    author_label = tk.Label(add_book_window, text="Author:")
+    author_entry = tk.Entry(add_book_window)
+
+    publication_year_label = tk.Label(add_book_window, text="Publication Year:")
+    publication_year_entry = tk.Entry(add_book_window)
+
+    available_copies_label = tk.Label(add_book_window, text="Available Copies:")
+    available_copies_entry = tk.Entry(add_book_window)
+
+    total_copies_label = tk.Label(add_book_window, text="Total Copies:")
+    total_copies_entry = tk.Entry(add_book_window)
+
+    # Function to save the new book information
+    def save_book():
+        # Get the information from the entries
+        title = title_entry.get()
+        author = author_entry.get()
+        publication_year = int(publication_year_entry.get())
+        available_copies = int(available_copies_entry.get())
+        total_copies = int(total_copies_entry.get())
+
+        # Connect to the database and insert the book
+        conn = sqlite3.connect("library.db")
+        conn.execute("INSERT INTO Books VALUES (?, ?, ?, ?, ?)", (title, author, publication_year, available_copies, total_copies))
+        conn.commit()
+        conn.close()
+
+        # Close the add book window
+        add_book_window.destroy()
+
+    # Define button to save the book
+    save_button = tk.Button(add_book_window, text="Save Book", command=save_book)
+
+    # Arrange the widgets in the add book window
+    title_label.pack()
+    title_entry.pack()
+    author_label.pack()
+    author_entry.pack()
+    publication_year_label.pack()
+    publication_year_entry.pack()
+    available_copies_label.pack()
+    available_copies_entry.pack()
+    total_copies_label.pack()
+    total_copies_entry.pack()
+    save_button.pack()
+
+# Define button to add a new book
+add_book_button = tk.Button(root, text="Add Book", command=add_book)
+add_book_button.pack()
+
+# Main program loop
+root.mainloop()
+import sqlite3
+import tkinter as tk
+
+# ... (previous code)
+
+# Class for Library Patrons
+class LibraryPatron:
+    def __init__(self, patron_id, name):
+        self.patron_id = patron_id
+        self.name = name
+        self.checked_out_books = []
+
+    def checkout_book(self, book):
+        self.checked_out_books.append(book)
+        book.checkout()
+
+    def return_book(self, book):
+        self.checked_out_books.remove(book)
+        book.checkin()
+
+# Define the Book class with Check Out and Check In methods
+class Book:
+    def __init__(self, title, author, publication_year, available_copies, total_copies):
+        self.title = title
+        self.author = author
+        self.publication_year = publication_year
+        self.available_copies = available_copies
+        self.total_copies = total_copies
+
+    def checkout(self):
+        if self.available_copies > 0:
+            self.available_copies -= 1
+            print(f"{self.title} checked out successfully!")
+        else:
+            print(f"{self.title} is not available for checkout.")
+
+    def checkin(self):
+        self.available_copies += 1
+        print(f"{self.title} checked in successfully!")
+
+# ... (rest of the code)
+import sqlite3
+import tkinter as tk
+
+# ... (previous code)
+
+# Create a table for Library Patrons
+conn.execute("""CREATE TABLE IF NOT EXISTS LibraryPatrons (
+    patron_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL
+);""")
+conn.commit()
+
+# GUI integration for book checkout and return
+def checkout_book():
+    # ... (get book and patron information from GUI)
+    book.checkout()
+    patron.checkout_book(book)
+    conn.execute("UPDATE Books SET available_copies = ? WHERE title = ?", (book.available_copies, book.title))
+    conn.commit()
+    tk.messagebox.showinfo("Success", f"{book.title} checked out successfully!")
+
+def return_book():
+    # ... (get book and patron information from GUI)
+    book.checkin()
+    patron.return_book(book)
+    conn.execute("UPDATE Books SET available_copies = ? WHERE title = ?", (book.available_copies, book.title))
+    conn.commit()
+    tk.messagebox.showinfo("Success", f"{book.title} checked in successfully!")
+
+# Add checkout and return buttons to the main window
+checkout_button = tk.Button(root, text="Check Out Book", command=checkout_book)
+checkout_button.pack()
+
+return_button = tk.Button(root, text="Return Book", command=return_book)
+return_button.pack()
+
+# Database interaction for Library Patrons
+def add_patron():
+    # ... (get patron information from GUI)
+    conn.execute("INSERT INTO LibraryPatrons (name) VALUES (?)", (patron.name,))
+    conn.commit()
+
+def get_patron_by_id(patron_id):
+    cursor = conn.execute("SELECT * FROM LibraryPatrons WHERE patron_id = ?", (patron_id,))
+    row = cursor.fetchone()
+    if row:
+        return LibraryPatron(row[0], row[1])
+    else:
+        return None
+
+# Error handling
+try:
+    # ... (code that might raise exceptions)
+    result = some_function()  # Replace with actual code that might raise exceptions
+except sqlite3.Error as e:
+    tk.messagebox.showerror("Database Error", f"An error occurred: {e}")
+except Exception as e:
+    tk.messagebox.showerror("Error", f"An unexpected error occurred: {e}")
+
+
+# ... (rest of the code)
+import sqlite3
+import tkinter as tk
+from datetime import datetime  # Import datetime for transaction dates
+
+# ... (previous code)
+
+# Create a table for Library Transactions
+conn.execute("""CREATE TABLE IF NOT EXISTS LibraryTransactions (
+    transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patron_id INTEGER NOT NULL,
+    book_title TEXT NOT NULL,
+    transaction_date TEXT NOT NULL
+);""")
+conn.commit()
+
+# Class for Library Transactions
+class LibraryTransaction:
+    def __init__(self, patron, book):
+        self.patron = patron
+        self.book = book
+        self.transaction_date = datetime.now().strftime("%Y-%m-%d")  # Store date as string
+
+# Update checkout and return functions to record transactions
+def checkout_book():
+    # ... (get book and patron information from GUI)
+    book.checkout()
+    patron.checkout_book(book)
+    conn.execute("UPDATE Books SET available_copies = ? WHERE title = ?", (book.available_copies, book.title))
+    conn.execute("INSERT INTO LibraryTransactions (patron_id, book_title, transaction_date) VALUES (?, ?, ?)", (patron.patron_id, book.title, datetime.now().strftime("%Y-%m-%d")))
+    conn.commit()
+    tk.messagebox.showinfo("Success", f"{book.title} checked out successfully!")
+
+def return_book():
+    # ... (get book and patron information from GUI)
+    book.checkin()
+    patron.return_book(book)
+    conn.execute("UPDATE Books SET available_copies = ? WHERE title = ?", (book.available_copies, book.title))
+    conn.commit()
+    tk.messagebox.showinfo("Success", f"{book.title} checked in successfully!")
+
+# ... (rest of the code)
+import sqlite3
+import tkinter as tk
+from datetime import datetime, timedelta
+
+# ... (previous code)
+
+# Due Dates
+DEFAULT_DUE_DAYS = 14  # Set default due days
+
+class Book:
+    # ... (previous code)
+
+    def checkout(self):
+        # ... (previous code)
+        self.due_date = datetime.now() + timedelta(days=DEFAULT_DUE_DAYS)
+
+# LibraryBranch Class
+class LibraryBranch:
+    def __init__(self, name, address):
+        self.name = name
+        self.address = address
+        self.books = []  # List of books in this branch
+        self.patrons = []  # List of patrons registered at this branch
+
+# Reservation System
+class BookReservation:
+    def __init__(self, patron, book):
+        self.patron = patron
+        self.book = book
+        self.reservation_date = datetime.now()
+
+# ... (rest of the code, including GUI elements and database interactions for managing branches, reservations, due dates, and fine calculations)
+import sqlite3
+import tkinter as tk
+from datetime import datetime, timedelta
+
+# ... (previous code)
+
+# GUI elements
+def display_book_info(book):
+    """Displays book details, due date, reservation status, and overdue fines."""
+
+    info_label = tk.Label(
+        text=f"Title: {book.title}\nAuthor: {book.author}\nISBN: {book.isbn}\nDue Date: {book.due_date}\nReservation Status: {book.reservation_status}\nOverdue Fines: ${book.overdue_fines}",
+        justify="left",
+    )
+    info_label.pack()
+
+
+def select_branch():
+    """Displays a list of branches for selection."""
+    branch_list = tk.Listbox(selectmode="single")
+    for branch in get_all_branches():  # Assuming a function to retrieve branches
+        branch_list.insert("end", branch.name)
+    branch_list.pack()
+
+    # Add a button to confirm selection
+    select_button = tk.Button(text="Select Branch", command=select_branch_confirmed)
+    select_button.pack()
+
+
+def reserve_book():
+    """Allows patron to reserve a book."""
+    book_id_entry = tk.Entry()
+    book_id_entry.pack()
+
+    # Add a button to confirm reservation
+    reserve_button = tk.Button(text="Reserve Book", command=reserve_book_confirmed)
+    reserve_button.pack()
+
+
+
+# Database integration
+conn.execute("""CREATE TABLE IF NOT EXISTS LibraryBranches (
+    branch_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    address TEXT NOT NULL
+);""")
+conn.execute("""CREATE TABLE IF NOT EXISTS BookReservations (
+    reservation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patron_id INTEGER NOT NULL,
+    book_title TEXT NOT NULL,
+    reservation_date TEXT NOT NULL
+);""")
+conn.commit()
+
+def get_books_by_branch(branch_id):
+    """Retrieves books from the database within a specific branch."""
+    conn = sqlite3.connect("library.db")  # Assuming your database name
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT title, author, isbn, available_copies FROM Books WHERE branch_id = ?",
+        (branch_id,),
+    )
+    books = cursor.fetchall()
+    conn.close()
+    return books
+
+
+def check_reservations(book_title):
+    """Checks if a book has any reservations."""
+    conn = sqlite3.connect("library.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM BookReservations WHERE book_title = ?", (book_title,)
+    )
+    reservations = cursor.fetchall()
+    conn.close()
+    return reservations
+
+
+
+# Error handling
+def handle_error(error_message):
+    tk.messagebox.showerror("Error", error_message)
+
+# ... (rest of the code, updated to use these functions for GUI interactions and database operations)
+import sqlite3
+import tkinter as tk
+from datetime import datetime, timedelta
+
+# ... (previous code)
+
+# GUI element implementations
+def display_book_info(book):
+    book_info_window = tk.Toplevel(root)
+    book_info_window.title(f"Book Information - {book.title}")
+
+    tk.Label(book_info_window, text="Title:").pack()
+    tk.Label(book_info_window, text=book.title).pack()
+    # ... (add labels and entries for other book details, due date, reservation status, and fines)
+
+def select_branch():
+    branch_window = tk.Toplevel(root)
+    branch_window.title("Select Branch")
+
+    branch_options = tk.StringVar(branch_window)
+    branch_options.set("Select a branch")  # Set default option
+    branch_menu = tk.OptionMenu(branch_window, branch_options, *get_branch_names())
+    branch_menu.pack()
+    # ... (add button to confirm branch selection)
+
+def reserve_book():
+    # ... (get book and patron information from GUI)
+    conn.execute("INSERT INTO BookReservations (patron_id, book_title, reservation_date) VALUES (?, ?, ?)", (patron.patron_id, book.title, datetime.now()))
+    conn.commit()
+    tk.messagebox.showinfo("Success", f"{book.title} reserved successfully!")
+
+# Updated functions for branch-specific data and reservation logic
+def checkout_book():
+    # ... (get book, patron, and branch information from GUI)
+    if check_reservations(book.title):
+        handle_error("Book is currently reserved.")
+        return
+    # ... (rest of checkout logic, updating book availability in the correct branch)
+
+def return_book():
+    # ... (get book, patron, and branch information from GUI)
+    # ... (rest of return logic, updating book availability in the correct branch)
+    # Check for pending reservations and notify patrons if applicable
+import smtplib
+from email.mime.text import MIMEText
+
+def send_notification_email(recipient_email, subject, body):
+    """Sends an email notification."""
+
+    sender_email = "your_library_email@example.com"  # Replace with your email address
+    password = "your_email_password"  # Replace with your email password
+
+    message = MIMEText(body)
+    message["Subject"] = subject
+    message["From"] = sender_email
+    message["To"] = recipient_email
+
+    try:
+        with smtplib.SMTP("your_smtp_server", port=587) as server:  # Replace with your SMTP server details
+            server.starttls()
+            server.login(sender_email, password)
+            server.send_message(message)
+    except Exception as e:
+        raise Exception(f"Error sending email: {e}")  # Re-raise exception for handling in the calling code
+
+
+try:
+    # ... (code that might raise exceptions)
+except sqlite3.Error as e:
+    handle_error(f"Database error: {e}")
+except ValueError as e:
+    handle_error(f"Invalid input: {e}")
+except Exception as e:
+    handle_error(f"An unexpected error occurred: {e}")
+
+# ... (rest of the code, using these functions and error handling)
+import sqlite3
+import tkinter as tk
+import smtplib  # Import for email sending
+from datetime import datetime, timedelta
+
+# ... (previous code)
+
+# User Authentication
+def login():
+    # ... (get username and password from GUI)
+    # ... (query database to authenticate user)
+    if authenticated:
+        # ... (display main application window)
+    else:
+        handle_error("Invalid username or password")
+
+# Email Notifications
+def send_email(recipient, subject, body):
+    sender_email = "librarysystem@example.com"  # Replace with actual sender email
+    password = "your_password"  # Replace with actual password
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.starttls()
+        server.login(sender_email, password)
+        message = f"Subject: {subject}\n\n{body}"
+        server.sendmail(sender_email, recipient, message)
+
+# GUI integration for user authentication
+login_window = tk.Tk()
+login_window.title("Library Management System - Login")
+
+# ... (add labels and entries for username and password)
+login_button = tk.Button(login_window, text="Login", command=login)
+login_button.pack()
+
+# GUI integration for email notifications (e.g., for overdue books, available reservations)
+# ... (add options in user settings or relevant sections to enable or disable email notifications)
+
+# Update functions to send email notifications when needed
+def notify_overdue_books():
+    # ... (query database for overdue books)
+    for book in overdue_books:
+        patron = get_patron_by_id(book.patron_id)
+        send_email(patron.email, "Overdue Book Notice", f"Your book {book.title} is overdue. Please return it as soon as possible.")
+
+# ... (similarly, update other functions to send notifications for available reservations, etc.)
+import sqlite3
+import tkinter as tk
+import smtplib  # Import for email sending
+from datetime import datetime, timedelta
+import bcrypt  # Import for password hashing
+
+# ... (previous code)
+
+# Secure password storage
+def hash_password(password):
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+
+def check_password(password, hashed_password):
+    return bcrypt.checkpw(password.encode(), hashed_password)
+
+# GUI integration for user authentication
+login_window = tk.Tk()
+login_window.title("Library Management System - Login")
+
+username_label = tk.Label(login_window, text="Username:")
+username_label.pack()
+username_entry = tk.Entry(login_window)
+username_entry.pack()
+password_label = tk.Label(login_window, text="Password:")
+password_label.pack()
+password_entry = tk.Entry(login_window, show="*")
+password_entry.pack()
+login_button = tk.Button(login_window, text="Login", command=login)
+login_button.pack()
+
+# GUI integration for email notification settings
+# ... (add options in user settings or relevant sections to enable/disable notifications)
+
+# Updated functions for authentication and secure password handling
+def login():
+    username = username_entry.get()
+    password = password_entry.get()
+
+    cursor = conn.execute("SELECT * FROM Users WHERE username = ?", (username,))
+    user_data = cursor.fetchone()
+    if user_data and check_password(password, user_data[2]):  # Check hashed password
+        # ... (display main application window)
+    else:
+        handle_error("Invalid username or password")
+
+# ... (rest of the code, using these functions and email notifications)
